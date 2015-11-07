@@ -3,6 +3,10 @@ function causal_predicates = find_causal_rule3(data, predicates, num_bagging)
 	num_predicates = size(predicates,1);
 	causal_predicates = {};
 
+	odd_ratios = [];
+	n_12s = [];
+	n_21s = [];
+
 	for B=1:num_bagging
 		sample_data = [];
 		rowCount = 1;
@@ -209,12 +213,15 @@ function causal_predicates = find_causal_rule3(data, predicates, num_bagging)
 				% replace 0 with 1 to avoid infinite odd ratio (as mentioned in the paper).
 				if n_21 == 0
 					n_21 = 1;
-					if n_12 > 0
+					if n_12 >= 0
 						pass_pair = true;
 					end
 				end
 
 				odd_ratio = n_12/n_21;
+				odd_ratios(end+1) = odd_ratio;
+				n_12s(end+1) = n_12;
+				n_21s(end+1) = n_21;
 				low_ci = exp(log(odd_ratio) - 1.96 * sqrt((1/n_12) + (1/n_21)));
 				if low_ci > 1 || pass_pair
 				% if odd_ratio > 0.9
@@ -233,5 +240,10 @@ function causal_predicates = find_causal_rule3(data, predicates, num_bagging)
 		end
 	end
 	size_diff(3) = size(causal_predicates, 1);
+	if (size_diff(3) == 0)
+		odd_ratios
+		n_12s
+		n_21s
+	end
 	% size_diff
 end

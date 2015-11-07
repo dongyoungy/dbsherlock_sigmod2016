@@ -1,4 +1,4 @@
-function [result top_one_correct] = testNumberOfCorrectIdentification(confidence)
+function [result top_one_correct top_two] = testNumberOfCorrectIdentification(confidence)
     num_case = size(confidence,1);
     num_samples = size(confidence{1,1},2);
     result = {};
@@ -32,6 +32,7 @@ function [result top_one_correct] = testNumberOfCorrectIdentification(confidence
 
     total_sample = 0;
     correct_sample = 0;
+    correct_sample_2 = 0;
 
     for i=1:num_case
         if i==3
@@ -39,7 +40,9 @@ function [result top_one_correct] = testNumberOfCorrectIdentification(confidence
         end
         correct_count = result{i};
         correct_sample = correct_sample + correct_count(1);
+        correct_sample_2 = correct_sample_2 + correct_count(2);
         total_sample = total_sample + num_samples;
     end
     top_one_correct = correct_sample / total_sample;
+    top_two = correct_sample_2 / total_sample;
 end

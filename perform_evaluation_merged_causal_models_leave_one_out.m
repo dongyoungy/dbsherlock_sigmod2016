@@ -1,12 +1,10 @@
-function [confidence fscore] = perform_merged_causal_models_leave_one_out(num_discrete, diff_threshold, outlier_multiplier)
+function [confidence fscore lags] = perform_merged_causal_models_leave_one_out(num_discrete, diff_threshold, abnormal_multiplier, find_lag, lag)
 
     cwd = pwd;
     data = load('dbsherlock_datasets.mat');
 
     num_case = size(data.test_datasets, 1);
-    % num_case = 10;
     num_samples = size(data.test_datasets, 2);
-    % num_samples = 7;
 
     confidence = cell(num_case, num_case);
     fscore = cell(num_case, num_case);
@@ -23,16 +21,32 @@ function [confidence fscore] = perform_merged_causal_models_leave_one_out(num_di
     causes{10} = 'Poor Physical Design';
     causes{11} = 'Poorly Written Query';
     
-    if isempty(num_discrete)
-        num_discrete = 500;
+    train_param = ExperimentParameter;
+    test_param = ExperimentParameter;
+
+    train_param.create_model = true;
+
+    if ~isempty(num_discrete)
+        train_param.num_discrete = num_discrete;
+        test_param.num_discrete = num_discrete;
     end
-    if isempty(outlier_multiplier)
-        outlier_multiplier = 10;
+    if ~isempty(diff_threshold)
+        train_param.diff_threshold = diff_threshold;
+        test_param.diff_threshold = diff_threshold;
     end
-    if isempty(diff_threshold)
-        diff_threshold = 0.2;
+    if ~isempty(abnormal_multiplier)
+        train_param.abnormal_multiplier = abnormal_multiplier;
+        test_param.abnormal_multiplier = abnormal_multiplier;
     end
     
+    train_param.lag = lag;
+
+    if find_lag
+        train_param.find_lag = true;
+    end
+
+    lags = [];
+
     tic;
            
     for batch=1:num_samples
@@ -48,7 +62,11 @@ function [confidence fscore] = perform_merged_causal_models_leave_one_out(num_di
         for i=1:num_case
             for j=1:size(train_samples,2)
                 train_idx = train_samples(j);
-                explainExperimentSigmod2015_v2(data.test_datasets{i,train_idx}, data.abnormal_regions{i,train_idx}, data.normal_regions{i,train_idx}, [], num_discrete, diff_threshold, outlier_multiplier, true, causes{i}, ['cause' num2str(i) '-' num2str(train_idx)]);
+                train_param.cause_string = causes{i};
+                train_param.model_name = ['cause' num2str(i) '-' num2str(train_idx)];
+                % explainExperimentSigmod2015_v2(data.test_datasets{i,train_idx}, data.abnormal_regions{i,train_idx}, data.normal_regions{i,train_idx}, [], num_discrete, diff_threshold, outlier_multiplier, true, causes{i}, ['cause' num2str(i) '-' num2str(train_idx)]);
+                [e c p lag] = explainExperimentSigmod2015_v2(data.test_datasets{i,train_idx}, data.abnormal_regions{i,train_idx}, data.normal_regions{i,train_idx}, [], train_param);
+                lags(end+1) = lag;
             end
         end
 
@@ -58,7 +76,8 @@ function [confidence fscore] = perform_merged_causal_models_leave_one_out(num_di
                 test_idx = test_samples(j);
 
                 % explanation = explainExperimentSigmod(datasets{c,test_idx}.fields{1}, datasets{c,test_idx}.fields{2}, outliers{c,test_idx}, num_discrete, diff_threshold, outlier_multiplier);
-                explanation = explainExperimentSigmod2015_v2(data.test_datasets{i,test_idx}, data.abnormal_regions{i,test_idx}, data.normal_regions{i,test_idx}, [], num_discrete, diff_threshold, outlier_multiplier);
+                % explanation = explainExperimentSigmod2015_v2(data.test_datasets{i,test_idx}, data.abnormal_regions{i,test_idx}, data.normal_regions{i,test_idx}, [], num_discrete, diff_threshold, outlier_multiplier);
+                explanation = explainExperimentSigmod2015_v2(data.test_datasets{i,test_idx}, data.abnormal_regions{i,test_idx}, data.normal_regions{i,test_idx}, [], test_param);
                 for k=1:num_case
 					c2 = k;
                     compare = strcmp(explanation, causes{c2});

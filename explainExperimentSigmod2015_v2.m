@@ -1,7 +1,11 @@
-function [explanation causalModels predicates] = explainExperimentSigmod2015_v2(dataset, abnormalIdx, normalIdx, attribute_types, num_discrete, normalized_diff_threshold, abnormal_multiplier, createModel, causeStr, modelName)
+function [explanation causalModels predicates lag] = explainExperimentSigmod2015_v2(dataset, abnormalIdx, normalIdx, attribute_types, exp_param)
+% function [explanation causalModels predicates] = explainExperimentSigmod2015_v2(dataset, abnormalIdx, normalIdx, attribute_types, num_discrete, normalized_diff_threshold, abnormal_multiplier, createModel, causeStr, modelName)
 
     data = dataset.data;
     field_names = dataset.field_names;
+    if ~isa(exp_param, 'ExperimentParameter')
+        error('exp_param must be an object of the class ExperimentParameter');
+    end
 
     % model_directory = '/Users/dyoon/Work/dbsherlock_sigmod2016/causal_models';
     model_directory = [pwd '/causal_models'];
@@ -16,30 +20,36 @@ function [explanation causalModels predicates] = explainExperimentSigmod2015_v2(
 
     numRow = size(data, 1);
     numAttr = size(data, 2);
-    
+
     if nargin < 4 || isempty(attribute_types)
         attribute_types = zeros(1, numAttr);
     end
-    if nargin < 5
-        num_discrete = 500;
-    end
-    if nargin < 6
-        normalized_diff_threshold = 0.2;
-    end
-    if nargin < 7
-        abnormal_multiplier = 10;
-    end
-    if nargin < 8
-        createModel = false;
-    end
-    if nargin < 9
-        causeStr = 'Cause';
-    end
-    if nargin < 10
-        modelName = '';
+    
+    num_discrete = exp_param.num_discrete;
+    normalized_diff_threshold = exp_param.diff_threshold;
+    abnormal_multiplier = exp_param.abnormal_multiplier;
+    createModel = exp_param.create_model;
+    causeStr = exp_param.cause_string;
+    modelName = exp_param.model_name;
+
+    lag = 0;
+    abnormalIdx = abnormalIdx + exp_param.lag;
+
+    if (max(abnormalIdx) > numRow)
+        min_ind = min(abnormalIdx);
+        abnormalIdx = [min_ind:numRow];
     end
 
-    normalIdx = [];
+    if exp_param.find_lag
+        lag = find_lag(dataset, abnormalIdx, normalIdx);
+        abnormalIdx = abnormalIdx - lag;
+    end
+
+    if (min(abnormalIdx) < 1)
+        abnormalIdx = [1:max(abnormalIdx)];
+    end
+
+    % normalIdx = [];
     
     if isempty(normalIdx)
         normalIdx = [];
@@ -378,7 +388,7 @@ function [explanation causalModels predicates] = explainExperimentSigmod2015_v2(
     if createModel
         count = 1;
         effectCount = 1;
-        % predicates = find_causal_rule3(training_data, predicates, 1);
+        predicates = find_causal_rule3(training_data, predicates, 1);
         sorted_predicates = sortrows(predicates, [-4]);
         for j=1:size(sorted_predicates,1)
             if (sorted_predicates{j,1} <= 0)
