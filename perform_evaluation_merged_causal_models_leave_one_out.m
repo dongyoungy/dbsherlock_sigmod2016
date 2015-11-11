@@ -1,10 +1,12 @@
-function [confidence fscore lags] = perform_merged_causal_models_leave_one_out(num_discrete, diff_threshold, abnormal_multiplier, find_lag, lag)
+function [confidence fscore detected_lag_accuracies] = perform_merged_causal_models_leave_one_out(num_discrete, diff_threshold, abnormal_multiplier, introduce_lag, find_lag)
 
     cwd = pwd;
     data = load('dbsherlock_datasets.mat');
 
-    num_case = size(data.test_datasets, 1);
-    num_samples = size(data.test_datasets, 2);
+	num_case = size(data.test_datasets, 1);
+    %num_case = 1;
+	num_samples = size(data.test_datasets, 2);
+    %num_samples = 11;
 
     confidence = cell(num_case, num_case);
     fscore = cell(num_case, num_case);
@@ -39,13 +41,17 @@ function [confidence fscore lags] = perform_merged_causal_models_leave_one_out(n
         test_param.abnormal_multiplier = abnormal_multiplier;
     end
     
-    train_param.lag = lag;
+    if introduce_lag
+        train_param.introduce_lag = true;
+		train_param.lag_min = 10;
+		train_param.lag_max = 20;
+    end
 
     if find_lag
         train_param.find_lag = true;
     end
 
-    lags = [];
+	detected_lag_accuracies = [];
 
     tic;
            
@@ -65,8 +71,9 @@ function [confidence fscore lags] = perform_merged_causal_models_leave_one_out(n
                 train_param.cause_string = causes{i};
                 train_param.model_name = ['cause' num2str(i) '-' num2str(train_idx)];
                 % explainExperimentSigmod2015_v2(data.test_datasets{i,train_idx}, data.abnormal_regions{i,train_idx}, data.normal_regions{i,train_idx}, [], num_discrete, diff_threshold, outlier_multiplier, true, causes{i}, ['cause' num2str(i) '-' num2str(train_idx)]);
-                [e c p lag] = explainExperimentSigmod2015_v2(data.test_datasets{i,train_idx}, data.abnormal_regions{i,train_idx}, data.normal_regions{i,train_idx}, [], train_param);
-                lags(end+1) = lag;
+                [e c p detected_lag_accuracy] = explainExperimentSigmod2015_v2(data.test_datasets{i,train_idx}, data.abnormal_regions{i,train_idx}, data.normal_regions{i,train_idx}, [], train_param);
+				detected_lag_accuracies = horzcat(detected_lag_accuracies, detected_lag_accuracy);
+                % lags(end+1) = lag;
             end
         end
 
