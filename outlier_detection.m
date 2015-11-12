@@ -30,9 +30,10 @@ function [outlier, outlier_size] = outlier_detection(latency_in)
         U = q3 + 1.5*exp(2*mc)*IQR;
    else
         L = q1 - 1.5*exp(-2*mc)*IQR;
-        U =q3  + 1.5*exp(1.5*mc)*IQR;
+        U = q3 + 1.5*exp(1.5*mc)*IQR;
    end
-   
+
+
    
     %plot(latency);
     
@@ -40,16 +41,16 @@ function [outlier, outlier_size] = outlier_detection(latency_in)
    outlier_size = 0;
    
    for k = 1:latency_size
-        if  latency_in(k) <= L || latency_in(k) >= U
+        if  latency_in(k) >= U
             outlier_size = outlier_size + 1;
             outlier = [outlier, k];
         end
    end
+
    
-   if outlier_size < 3
-        outlier = index(latency_size-3:latency_size);
-        outlier_size = size(outlier, 1);
+   if outlier_size <= 0.05*latency_size
+      outlier_size = floor(0.05*latency_size);
+      outlier = index(latency_size-outlier_size+1:latency_size);
    end
-   
-   
+
 end
