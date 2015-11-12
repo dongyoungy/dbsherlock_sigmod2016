@@ -8,6 +8,8 @@ classdef ExperimentParameter < handle
 		cause_string = 'Cause';
 		model_name = '';
 		find_lag = false;
-		lag = 0;
+		introduce_lag = false;
+		lag_min = 0;
+		lag_max = 0;
 	end
 end % end classdef
