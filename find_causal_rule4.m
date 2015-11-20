@@ -3,6 +3,7 @@ function causal_predicates = find_causal_rule4(data, predicates, lags)
 	numRow = size(data,1);
 	num_predicates = size(predicates,1);
 	causal_predicates = {};
+	orig_predicates = predicates;
 
 	odd_ratios = [];
 	n_12s = [];
@@ -125,25 +126,25 @@ function causal_predicates = find_causal_rule4(data, predicates, lags)
 			end
 		end
 
-			% if there is a fair dataset.
-			if size(data_fair, 1) > 0
+		% if there is a fair dataset.
+		if size(data_fair, 1) > 0
 
-				pass_pair = false;
-				% replace 0 with 1 to avoid infinite odd ratio (as mentioned in the paper).
-				if n_21 == 0
-					n_21 = 1;
-					if n_12 >= 0
-						pass_pair = true;
-					end
+			pass_pair = false;
+			% replace 0 with 1 to avoid infinite odd ratio (as mentioned in the paper).
+			if n_21 == 0
+				n_21 = 1;
+				if n_12 >= 0
+					pass_pair = true;
 				end
+			end
 
-				odd_ratio = n_12/n_21;
-				odd_ratios(end+1) = odd_ratio;
-				n_12s(end+1) = n_12;
-				n_21s(end+1) = n_21;
-				low_ci = exp(log(odd_ratio) - 1.96 * sqrt((1/n_12) + (1/n_21)));
-				if low_ci > 1 || pass_pair
-				% if odd_ratio > 0.9
+			odd_ratio = n_12/n_21;
+			odd_ratios(end+1) = odd_ratio;
+			n_12s(end+1) = n_12;
+			n_21s(end+1) = n_21;
+			low_ci = exp(log(odd_ratio) - 1.96 * sqrt((1/n_12) + (1/n_21)));
+			if low_ci > 1 || pass_pair
+			% if odd_ratio > 0.9
 				found = false;
 				for p=1:size(causal_predicates,1)
 					if causal_predicates{p,1} == predicate{1,1}
@@ -158,7 +159,11 @@ function causal_predicates = find_causal_rule4(data, predicates, lags)
 		end
 	end
 
-	size_diff(3) = size(causal_predicates, 1);
+	if size(causal_predicates, 1) == 0
+		causal_predicates = orig_predicates;
+	end
+
+    %size_diff(3) = size(causal_predicates, 1);
 	%if (size_diff(3) == 0)
 		%odd_ratios
 		%n_12s

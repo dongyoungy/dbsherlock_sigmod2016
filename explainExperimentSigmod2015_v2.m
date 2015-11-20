@@ -1,4 +1,4 @@
-function [explanation causalModels predicates detected_lag_error] = explainExperimentSigmod2015_v2(dataset, abnormalIdx, normalIdx, attribute_types, exp_param)
+function [explanation causalModels predicates extra] = explainExperimentSigmod2015_v2(dataset, abnormalIdx, normalIdx, attribute_types, exp_param)
 % function [explanation causalModels predicates] = explainExperimentSigmod2015_v2(dataset, abnormalIdx, normalIdx, attribute_types, num_discrete, normalized_diff_threshold, abnormal_multiplier, createModel, causeStr, modelName)
 
 	data = dataset.data;
@@ -6,6 +6,7 @@ function [explanation causalModels predicates detected_lag_error] = explainExper
 	if ~isa(exp_param, 'ExperimentParameter')
 		error('exp_param must be an object of the class ExperimentParameter');
 	end
+	extra = struct;
 
 	% model_directory = '/Users/dyoon/Work/dbsherlock_sigmod2016/causal_models';
 	model_directory = [pwd '/causal_models'];
@@ -36,6 +37,11 @@ function [explanation causalModels predicates detected_lag_error] = explainExper
 	detected_lag_error = [];
 	lagged_abnormal_indexes = {};
 	lagged_normal_indexes = {};
+
+	% expand normal region
+	if exp_param.expand_normal_region
+		data = expand_normal_region(data, exp_param.expand_normal_size, abnormalIdx, normalIdx);
+	end
 
 	% introduce a random lag for each attribute.
 	if exp_param.introduce_lag
@@ -450,13 +456,34 @@ function [explanation causalModels predicates detected_lag_error] = explainExper
 	% size(predicates)
 	% size(predicates)
 
+	extra.num_should_be_filtered = 0;
+	extra.num_should_not_be_filtered = 0;
+	extra.num_filtered_correct = 0;
+	extra.num_filtered_incorrect = 0;
+	extra.before_false_positive = 0;
+	extra.before_false_negative = 0;
+
 	effect = {};
 	if createModel
 		count = 1;
 		effectCount = 1;
 		% predicates = find_causal_rule3(training_data, predicates, 1);
-		predicates = find_causal_rule4(training_data, predicates, lags);
-		sorted_predicates = sortrows(predicates, [-4]);
+		extra.predicates_before = predicates;
+		% predicates_after_filter = filter_predicates_with_correlation(predicates, data, abnormalIdx, normalIdx);
+		%predicates = find_causal_rule4(training_data, predicates, lags);
+		if ~isempty(exp_param.domain_knowledge)
+			[predicates c incorrect r should_not_be_filtered before_stat] = filter_with_domain_knowledge(data, predicates, exp_param.domain_knowledge, exp_param.correct_filter_list);
+			extra.num_filtered_correct = extra.num_filtered_correct + c;
+			extra.num_should_be_filtered = extra.num_should_be_filtered + r;
+			extra.num_filtered_incorrect = extra.num_filtered_incorrect + incorrect;
+			extra.num_should_not_be_filtered = extra.num_should_not_be_filtered + should_not_be_filtered;
+			extra.before_false_positive = extra.before_false_positive + before_stat.false_positive;
+			extra.before_false_negative = extra.before_false_negative + before_stat.false_negative;
+		end
+		sorted_predicates = {};
+		if size(predicates, 1) > 0
+			sorted_predicates = sortrows(predicates, [-4]);
+		end
 		for j=1:size(sorted_predicates,1)
 			if (sorted_predicates{j,1} <= 0)
 				continue

@@ -1,5 +1,5 @@
-function [abnormal_region] = runPerfAugur(dataset)
-	data = dataset.data;
+function [abnormal_region] = runPerfAugur(data)
+	%data = dataset.data;
 	latency = data(:,2);
 	latency(isnan(latency)) = 0;
 	len = size(latency, 1);
@@ -20,8 +20,8 @@ function [abnormal_region] = runPerfAugur(dataset)
 			abnormal_latency = latency(abnormal);
 			% abnormal_latency(find(abnormal_latency==0)) = [];
 			abnormal_median = median(abnormal_latency);
-			% scores(s,e) = (abnormal_median - normal_median) * log(abs((e-s+1)));
-			scores(s,e) = (abnormal_median - normal_median) * 2 * abs((e-s+1));
+			scores(s,e) = (abnormal_median - normal_median) * log(abs((e-s+1)));
+			%scores(s,e) = (abnormal_median - normal_median) * 2 * abs((e-s+1));
 		end
 	end
 

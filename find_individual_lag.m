@@ -46,14 +46,20 @@ function lags = find_individual_lag(dataset, abnormal_index, normal_index)
             u = norminv(ratio_abnormal);
             h = exp(-1 * (u^2) / 2) / sqrt(2*pi);
 
-            biserial_cor = ((mean_abnormal - mean_normal) / std_dev) * ((num_abnormal * num_normal) / (h *  num_total^2));
+            biserial_cor = ((mean_abnormal - mean_normal) / std_dev) * ((num_abnormal * num_normal) / (num_total^2));
+            %biserial_cor = ((mean_abnormal - mean_normal) / std_dev) * ((num_abnormal * num_normal) / (h *  num_total^2));
             correlations(end+1) = abs(biserial_cor);
         end
         [max_cor ind] = max(correlations);
-        if isempty(ind) || max_cor < 0.7
-            lags(i) = 0;
-        else
-            lags(i) = ind - 1;
-        end
+		if isempty(ind)
+			lags(i) = 0;
+		else
+			lags(i) = ind - 1;
+		end
+        %if isempty(ind) || max_cor < 0.7
+            %lags(i) = 0;
+        %else
+            %lags(i) = ind - 1;
+        %end
     end
 end

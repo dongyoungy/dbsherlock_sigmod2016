@@ -8,10 +8,10 @@ function [visit, current_cluster, if_cluster] = expandCluster(data, i , visited,
                 union_flag = 0;
                 if visited(neighbor(j)) == 0
                         visited(neighbor(j)) = 1;
-                        neighbor2 = regionQuery(data, neighbor(j), eps);
-                        if size(neighbor2, 2) >= minPts
-                                union_flag = 1;
-                        end
+                        %neighbor2 = regionQuery(data, neighbor(j), eps);
+                        %if size(neighbor2, 2) >= minPts
+                                %union_flag = 1;
+                        %end
                 end
                 
                 if is_cluster(neighbor(j)) == 0

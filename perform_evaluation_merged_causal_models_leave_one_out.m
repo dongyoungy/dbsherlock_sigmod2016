@@ -1,12 +1,12 @@
-function [confidence fscore detected_lag_accuracies] = perform_merged_causal_models_leave_one_out(num_discrete, diff_threshold, abnormal_multiplier, introduce_lag, find_lag)
+function [confidence fscore detected_lag_accuracies] = perform_merged_causal_models_leave_one_out(num_discrete, diff_threshold, abnormal_multiplier, introduce_lag, find_lag, expand_normal, expand_size)
 
     cwd = pwd;
     data = load('dbsherlock_datasets.mat');
 
 	num_case = size(data.test_datasets, 1);
-    %num_case = 1;
+    % num_case = 2;
 	num_samples = size(data.test_datasets, 2);
-    %num_samples = 11;
+    % num_samples = 2;
 
     confidence = cell(num_case, num_case);
     fscore = cell(num_case, num_case);
@@ -42,13 +42,18 @@ function [confidence fscore detected_lag_accuracies] = perform_merged_causal_mod
     end
     
     if introduce_lag
-        train_param.introduce_lag = true;
-		train_param.lag_min = 10;
-		train_param.lag_max = 20;
+        test_param.introduce_lag = true;
+		test_param.lag_min = 20;
+		test_param.lag_max = 30;
     end
 
     if find_lag
-        train_param.find_lag = true;
+        test_param.find_lag = true;
+    end
+
+    if expand_normal
+        train_param.expand_normal_region = true;
+        train_param.expand_normal_size = expand_size;
     end
 
 	detected_lag_accuracies = [];

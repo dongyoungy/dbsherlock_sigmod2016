@@ -11,5 +11,9 @@ classdef ExperimentParameter < handle
 		introduce_lag = false;
 		lag_min = 0;
 		lag_max = 0;
+		expand_normal_region = false;
+		expand_normal_size = 1000;
+		domain_knowledge = [];
+		correct_filter_list = [];
 	end
 end % end classdef

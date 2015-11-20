@@ -9,11 +9,11 @@ function neighbor = regionQuery(data, i, eps)
         neighbor = [];
         for j = 1:data_size
                 distance = 0;
-                for k=2:2
+                for k=1:dimension
                     distance = distance + (data(i,k)-data(j,k))^2;
                 end
-                non_zero_data = find(max(data) ~= min(data));
-                distance = sqrt(distance); 
+                %non_zero_data = find(max(data) ~= min(data));
+                distance = sqrt(distance);
                 if distance <= eps
                         neighbor = [neighbor, j];
                 end
